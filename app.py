@@ -1,5 +1,5 @@
 import os
-import psycopg2
+import psycopg
 from flask import Flask, jsonify
 
 app = Flask(__name__)
@@ -12,15 +12,10 @@ def health():
 def db_test():
     try:
         db_url = os.environ["DATABASE_URL"]
-        conn = psycopg2.connect(db_url)
-        cur = conn.cursor()
-        cur.execute("SELECT now();")
-        t = cur.fetchone()[0]
-        cur.close()
-        conn.close()
-        return jsonify({"db": "connected", "time": str(t)})
+        with psycopg.connect(db_url) as conn:
+            with conn.cursor() as cur:
+                cur.execute("select 1;")
+                x = cur.fetchone()[0]
+        return jsonify({"db": "ok", "result": x})
     except Exception as e:
         return jsonify({"db": "failed", "error": str(e)}), 500
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
